@@ -5,15 +5,15 @@ import numpy as np
 from poliastro.bodies import Earth
 from poliastro.twobody import Orbit
 
-def olod_iteration(ls, Rss, ts, r0Guess, v0Guess):
+def volod_iteration(ls, vLOSs, ts, r0Guess, v0Guess):
 	"""
 	Perform one iteration of optimal linear orbit determination
 
 	Args: 
 		ls (numpy array (nx3)):
 			n line of sight unit vector observations
-		Rss (numpy array (nx3)):
-			n locations of the sensor
+		vLOSs (numpy array (n)):
+			n LOS velocity measurements
 		ts (numpy array (n)):
 			n floats representing the times of the observations
 		r0Guess (numpy array (3)):
@@ -38,29 +38,30 @@ def olod_iteration(ls, Rss, ts, r0Guess, v0Guess):
 		else:
 			rs = np.vstack((rs, r))
 			vs = np.vstack((vs, v))
-		stms.append(stm[:3,:])
-	rhos = rs - Rss
-	lmats = tuple(map(lambda l: skew(l), ls))
+		stms.append(stm[3:,:])
+	lmats = tuple(map(lambda l: np.array([l]), ls))
+	print("hello")
+	#print(lmats)
+	#print(stms)
 	A = np.vstack(tuple(map(lambda x, y: np.matmul(x, y), lmats, stms)))
-	b = -1.*np.hstack(tuple(map(lambda x, y: np.matmul(x, y), lmats, rhos)))
-	#print("Least square setup")	
-	#print(A)
-	#print(b)
-	dx0 = np.array(np.linalg.lstsq(A.value, b.value)[0])
-	#print("Deltas")
-	#print(dx0)
-	#print([(r0Guess.value + dx0[:3])*r0Guess.unit, (v0Guess.value + dx0[3:])*v0Guess.unit])
+	b = np.hstack(tuple(map(lambda z, x, y: z - np.matmul(x, y), vLOSs, lmats, vs)))
+	print(A)
+	print(b.value)
+	dx0 = np.array(np.linalg.lstsq(A, b.value)[0])
+	print("Deltas")
+	print(dx0)
+	print([(r0Guess.value + dx0[:3])*r0Guess.unit, (v0Guess.value + dx0[3:])*v0Guess.unit])
 	return [(r0Guess.value + dx0[:3])*r0Guess.unit, (v0Guess.value + dx0[3:])*v0Guess.unit]
 		
 
-def olod(ls, Rss, ts, r0Guess, v0Guess, tolPos, tolVel, maxIter):
+def volod(ls, vLOSs, ts, r0Guess, v0Guess, tolPos, tolVel, maxIter):
 	"""
 	Perform iterations of optimal linear orbit determination until difference between iterations has norm less than tol
 
 	Args: 
 		ls (numpy array (nx3)):
 			n line of sight unit vector observations
-		Rss (numpy array (nx3)):
+		vLOSs (numpy array (n)):
 			n locations of the sensor
 		ts (numpy array (n)):
 			n floats representing the times of the observations
@@ -82,7 +83,7 @@ def olod(ls, Rss, ts, r0Guess, v0Guess, tolPos, tolVel, maxIter):
 	for i in range(maxIter):
 		r0GuessOld = r0Guess
 		v0GuessOld = v0Guess
-		x0Guess = olod_iteration(ls, Rss, ts, r0Guess, v0Guess)
+		x0Guess = volod_iteration(ls, vLOSs, ts, r0Guess, v0Guess)
 		r0Guess = x0Guess[0]
 		v0Guess = x0Guess[1]
 		if np.linalg.norm(r0Guess-r0GuessOld) < tolPos and np.linalg.norm(v0Guess-v0GuessOld) < tolVel:
