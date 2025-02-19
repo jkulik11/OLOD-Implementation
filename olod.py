@@ -1,6 +1,7 @@
 from util import skew, findSTM
 from astropy import units as u
 import numpy as np
+from STMint.STMint import STMint
 
 from poliastro.bodies import Earth
 from poliastro.twobody import Orbit
@@ -25,25 +26,17 @@ def olod_iteration(ls, Rss, ts, r0Guess, v0Guess):
 			An updated guess at the initial orbit state
 	"""
 	#find states and STMs predicted at each time
-	orb = Orbit.from_vectors(Earth, r0Guess, v0Guess)
-	stms = []
-	for i in range(len(ts)):
-		orbNew = orb.propagate(ts[i])
-		r = orbNew.r
-		v = orbNew.v
-		stm = findSTM(r0Guess, v0Guess, r, v,ts[i])
-		if i == 0:
-			rs = r
-			vs = v
-		else:
-			rs = np.vstack((rs, r))
-			vs = np.vstack((vs, v))
-		stms.append(stm[:3,:])
+	x_initial = np.array([r0Guess[0].value, r0Guess[1].value, r0Guess[2].value, v0Guess[0].value, v0Guess[1].value, v0Guess[2].value], dtype=object)
+	test = STMint(preset="twoBodyEarth", variational_order=1)
+	states, stms, ts = test.dynVar_int([0, ts[-1].value], x_initial, t_eval = ts, output="all")
+	stms = np.array(stms)
+	rs = states[:,:3] << u.km
+	vs = states[:,3:] << u.km/u.s
 	rhos = rs - Rss
 	lmats = tuple(map(lambda l: skew(l), ls))
-	A = np.vstack(tuple(map(lambda x, y: np.matmul(x, y), lmats, stms)))
+	A = np.vstack(tuple(map(lambda x, y: np.matmul(x, y), lmats, stms[:,:3,:])))
 	b = -1.*np.hstack(tuple(map(lambda x, y: np.matmul(x, y), lmats, rhos)))
-	dx0 = np.array(np.linalg.lstsq(A.value, b.value)[0])
+	dx0 = np.array(np.linalg.lstsq(A.value, b.value, rcond=None)[0])
 	#print("Deltas")
 	#print(dx0)
 	#print([(r0Guess.value + dx0[:3])*r0Guess.unit, (v0Guess.value + dx0[3:])*v0Guess.unit])
