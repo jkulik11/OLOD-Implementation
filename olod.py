@@ -1,4 +1,4 @@
-from util import skew, findSTM
+from util import skew
 from astropy import units as u
 import numpy as np
 from STMint.STMint import STMint
