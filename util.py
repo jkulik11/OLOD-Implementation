@@ -14,39 +14,6 @@ def skew(vec):
 	"""
 	return np.array([[0., -1.*vec[2].value, vec[1].value],[vec[2].value,0.,-1.*vec[0].value],[-1.*vec[1].value, vec[0].value, 0.]])*(vec[[0]].unit)
 
-def findSTM(r0, v0, rf, vf, dt):
-	"""
-	Return the state transition matrix associated with this trajectory
-
-	Args: 
-		r0 (numpy array (3)):
-			Initial position vector
-		v0 (numpy array (3)):
-			Initial velocity vector	
-		rf (numpy array (3)):
-			Final position vector
-		vf (numpy array (3)):
-			Final velocity vector	
-		dt (float):
-			Time between the two states	
-	Returns:
-		stm (numpy array (6x6))
-	"""
-	#km and s units
-	mu = 3.986004418E5 << u.km**3 / u.s**2
-	r0Mag = np.linalg.norm(r0)
-	rfMag = np.linalg.norm(rf)
-	h = np.cross(r0,v0)
-	sr0 = skew(r0)
-	sv0 = skew(v0)
-	srf = skew(rf)
-	svf = skew(vf)
-	sh = skew(h)
-	B=np.transpose(np.vstack([r0/np.sqrt(mu*r0Mag), r0Mag*v0/mu]))
-	Y0 = np.block([[sr0.value, -1.*np.matmul((np.matmul(sr0, sv0)+sh), B).value, -1.*np.transpose([r0])],[sv0.value, np.matmul(mu/r0Mag**3*np.matmul(sr0,sr0)-np.matmul(sv0,sv0), B).value, np.transpose([v0])/2.]])
-	Yf = np.block([[srf.value, -1.*np.matmul((np.matmul(srf, svf)+sh), B).value, np.transpose([-1.*rf+3./2.*dt*vf])],[svf.value, np.matmul(mu/rfMag**3*np.matmul(srf,srf)-np.matmul(svf,svf), B).value, np.transpose([vf/2.-3./2.*mu/rfMag**3*dt*rf])]])
-	return np.matmul(Yf, np.linalg.inv(Y0))
-
 def groundStationPos(lon0,lat,ts):
 	"""
 	Return low fidelity ground station positions for a sensor
