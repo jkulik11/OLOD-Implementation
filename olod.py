@@ -1,4 +1,4 @@
-from util import skew, findSTM
+from util import skew
 from astropy import units as u
 import numpy as np
 from STMint.STMint import STMint
@@ -27,14 +27,14 @@ def olod_iteration(ls, Rss, ts, r0Guess, v0Guess):
 	"""
 	#find states and STMs predicted at each time
 	x_initial = np.array([r0Guess[0].value, r0Guess[1].value, r0Guess[2].value, v0Guess[0].value, v0Guess[1].value, v0Guess[2].value], dtype=object)
-	test = STMint(preset="twoBodyEarth", variational_order=1)
-	states, stms, ts = test.dynVar_int([0, ts[-1].value], x_initial, t_eval = ts, output="all")
-	stms = np.array(stms)
+	test = STMint(preset="threeBodyEarthMoon", variational_order=2)
+	states, stms, stts, ts = test.dynVar_int2([0, ts[-1].value], x_initial, t_eval = ts, output="all")
+	stms = np.array(stms[:,:3,:])
 	rs = states[:,:3] << u.km
 	vs = states[:,3:] << u.km/u.s
 	rhos = rs - Rss
 	lmats = tuple(map(lambda l: skew(l), ls))
-	A = np.vstack(tuple(map(lambda x, y: np.matmul(x, y), lmats, stms[:,:3,:])))
+	A = np.vstack(tuple(map(lambda x, y: np.matmul(x, y), lmats, stms)))
 	b = -1.*np.hstack(tuple(map(lambda x, y: np.matmul(x, y), lmats, rhos)))
 	dx0 = np.array(np.linalg.lstsq(A.value, b.value, rcond=None)[0])
 	#print("Deltas")
