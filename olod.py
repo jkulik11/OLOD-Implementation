@@ -6,7 +6,7 @@ from STMint.STMint import STMint
 from poliastro.bodies import Earth
 from poliastro.twobody import Orbit
 
-def olod_iteration(ls, t_max, Rss, r0Guess, v0Guess):
+def olod_iteration(ls, t_max, t_steps, Rss, r0Guess, v0Guess):
 	"""
 	Perform one iteration of optimal linear orbit determination
 
@@ -28,7 +28,7 @@ def olod_iteration(ls, t_max, Rss, r0Guess, v0Guess):
 	#find states and STMs predicted at each time
 	x_initial = np.array([r0Guess[0], r0Guess[1], r0Guess[2], v0Guess[0], v0Guess[1], v0Guess[2]], dtype=object)
 	Orbit = STMint(preset = "threeBody", preset_mult = (1.0 / (81.30059 + 1.0)), variational_order=2)
-	states, stms, stts, ts = Orbit.dynVar_int2([0, t_max], x_initial, t_eval= np.array(0,t_max,10), output="all")
+	states, stms, stts, ts = Orbit.dynVar_int2([0, t_max], x_initial, t_eval= np.linspace(0, t_max, num=t_steps), output="all")
 	stms = np.array(stms)
 	stms = stms[:,:3,:]
 	states = np.array(states)
@@ -45,7 +45,7 @@ def olod_iteration(ls, t_max, Rss, r0Guess, v0Guess):
 	return [(r0Guess + dx0[:3]), (v0Guess + dx0[3:])]
 		
 
-def olod(ls, t_max, Rss, r0Guess, v0Guess, tolPos, tolVel, maxIter):
+def olod(ls, t_max, t_steps, Rss, r0Guess, v0Guess, tolPos, tolVel, maxIter):
 	"""
 	Perform iterations of optimal linear orbit determination until difference between iterations has norm less than tol
 
@@ -74,7 +74,7 @@ def olod(ls, t_max, Rss, r0Guess, v0Guess, tolPos, tolVel, maxIter):
 	for i in range(maxIter):
 		r0GuessOld = r0Guess
 		v0GuessOld = v0Guess
-		x0Guess = olod_iteration(ls, t_max, Rss, r0Guess, v0Guess)
+		x0Guess = olod_iteration(ls, t_max, t_steps, Rss, r0Guess, v0Guess)
 		r0Guess = x0Guess[0]
 		v0Guess = x0Guess[1]
 		if np.linalg.norm(r0Guess-r0GuessOld) < tolPos and np.linalg.norm(v0Guess-v0GuessOld) < tolVel:

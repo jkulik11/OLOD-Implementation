@@ -28,10 +28,11 @@ def test1():
 	yd0 = -0.103256341062793815791764364248006121
 
 	t_max = 1.5111111111111111111111111111111111111111/4
+	t_steps = 10
 
 	x_0 = np.array([x0, 0, z0, 0, yd0, 0])
 	Orbit = STMint(preset = "threeBody", preset_mult = (1.0 / (81.30059 + 1.0)), variational_order=2)
-	states, stms, stts, ts = Orbit.dynVar_int2([0, 1.5111111111111111111111111111111111111111/4], x_0, output="all")
+	states, stms, stts, ts = Orbit.dynVar_int2([0, t_max], x_0, t_eval = np.linspace(0, t_max, num=t_steps), output="all")
 	states = np.array(states)
 	print(states)
 	r = states[:,:3]
@@ -45,12 +46,12 @@ def test1():
 	#even with a GEO guess, we find a LEO orbit
 	print(ls)
 	r0Guess = x_0[:3]
-	r0Guess = r0Guess * 1.001
+	r0Guess = r0Guess * 1.01
 	v0Guess = x_0[3:]
 	# v0Guess[0] = 0.1
 	print(f"Orbit Guess:\n r_0 = {r0Guess}\n v_0 = {v0Guess}")
 	print("Running OLOD")
-	soln = olod.olod(ls, t_max, Rss, r0Guess, v0Guess, .001, 1., 20)
+	soln = olod.olod(ls, t_max, t_steps, Rss, r0Guess, v0Guess, .001, 1., 20)
 	print("Solution Orbit:")
 	print(soln)
 	return soln
