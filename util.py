@@ -12,7 +12,7 @@ def skew(vec):
 		mat (numpy array (3x3)):
 			The cross product matrix associated with vec
 	"""
-	return np.array([[0., -1.*vec[2].value, vec[1].value],[vec[2].value,0.,-1.*vec[0].value],[-1.*vec[1].value, vec[0].value, 0.]])*(vec[[0]].unit)
+	return np.array([[0., -1.*vec[2], vec[1]],[vec[2],0.,-1.*vec[0]],[-1.*vec[1], vec[0], 0.]])
 
 def groundStationPos(lon0,lat,ts):
 	"""
