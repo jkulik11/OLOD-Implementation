@@ -6,7 +6,6 @@ import util
 import olod
 
 def test1():
-	# Rss = util.groundStationPos(0*u.rad,np.pi/4.*u.rad,ts)
 
 	# Initial Conditions
 	x0 = 1.02202151273581740824714855590570360
@@ -18,7 +17,7 @@ def test1():
 	x_0 = np.array([x0, y0, z0, xd0, yd0, zd0])
 
 	# Initial guess
-	delta = 1.001 # Amount to perturb the initial conditions for guess
+	delta = 10.001 # Amount to perturb the initial conditions for guess
 	r0Guess = x_0[:3] * delta
 	v0Guess = x_0[3:] * delta
 
@@ -27,6 +26,9 @@ def test1():
 	t_steps = 10 # Number of steps taken
 	ts = np.linspace(0, t_max, num=t_steps) # time steps
 
+	# Ground Station positions in the Earth moon system
+	Rss = util.groundStationPos(0,np.pi/4.,ts) #Comment out line 39 if using this
+
 	# Create True orbit
 	Orbit = STMint(preset = "threeBody", preset_mult = (1.0 / (81.30059 + 1.0)), variational_order=2)
 	states, stms, stts, ts = Orbit.dynVar_int2([0, ts[-1]], x_0, t_eval = ts, output="all")
@@ -34,7 +36,7 @@ def test1():
 
 	# Gather line of sight vectors
 	r = states[:,:3]
-	Rss = np.zeros((len(r),3))
+	# Rss = np.zeros((len(r),3))
 	for i in range(len(ts)):
 		rho = r[i] - Rss[i]
 		if i == 0:

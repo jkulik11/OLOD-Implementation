@@ -29,13 +29,19 @@ def groundStationPos(lon0,lat,ts):
 		Rss (numpy array (n)):
 			n positions of a hypothetical sensor on the ground
 	"""
-	Re = 6371. << u.km
-	lons = lon0 + ts * 2.*np.pi/(1. * u.d)*u.rad
+
+# Need to nondimensionalize things I believe. convert earths radius as well as the earth rotation rate to be non dimensional. get the nondimensional rotation rate of earth moon system
+# Use these values to get the lons.
+
+	Re = 6371 / 384400 # Earth radius in nondimensional form (radius of the earth divided by the distance from earth to moon)
+	t_nondimensional = 1 / 27.32 # Nondimensional period for one earth rotation (1 earth day / 1 lunar month)
+	lons = lon0 + ts * 2.*np.pi/(t_nondimensional)
 	for i in range(len(ts)):
+		adjusted_lons = lons[i] - (2 * np.pi * ts[i]) # Adjusted to include the fact that the earth moon frame is rotating, causing a change in lons
 		if i==0:
-			Rss =Re*np.array([np.cos(lons[i])*np.cos(lat),np.sin(lons[i])*np.cos(lat),np.sin(lat)])
+			Rss =Re*np.array([np.cos(adjusted_lons)*np.cos(lat),np.sin(adjusted_lons)*np.cos(lat),np.sin(lat)])
 		else:
-			Rss = np.vstack((Rss, Re*np.array([np.cos(lons[i])*np.cos(lat),np.sin(lons[i])*np.cos(lat),np.sin(lat)])))
+			Rss = np.vstack((Rss, Re*np.array([np.cos(adjusted_lons)*np.cos(lat),np.sin(adjusted_lons)*np.cos(lat),np.sin(lat)])))
 	return Rss
 	
 
